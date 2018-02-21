@@ -248,11 +248,20 @@ void slave_shutdown(void)
 {
     if (slave_running == 0)
         return;
+    DEBUG0 ("shutting down slave");
+    yp_shutdown();
+    stats_shutdown();
+    fserve_shutdown();
+    stop_logging();
+    // stall until workers have shut down
+    thread_rwlock_wlock (&global.workers_rw);
+    thread_rwlock_unlock (&global.workers_rw);
+
+    //INFO0 ("all workers shut down");
     avl_tree_free (global.relays, NULL);
     thread_rwlock_destroy (&slaves_lock);
     thread_rwlock_destroy (&workers_lock);
     thread_spin_destroy (&relay_start_lock);
-    yp_shutdown();
     slave_running = 0;
 }
 
@@ -1180,7 +1189,7 @@ static void _slave_thread(void)
                 restart_connection_thread = 0;
             }
         }
-        stats_global_calc();
+        stats_global_calc (current.tv_sec);
         fserve_scan (current.tv_sec);
 
         /* allow for terminating icecast if no streams running */

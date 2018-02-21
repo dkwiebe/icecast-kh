@@ -48,57 +48,6 @@
 #include <signal.h>
 #endif
 
-// Generated using `openssl dhparam -C -2 2048`
-// BEGIN DH CODE
-#ifdef HAVE_OPENSSL
-#include <openssl/dh.h>
-
-#if !defined(SSL_CTX_set_dh_auto)
-static DH *get_dh2048()
-{
-	static unsigned char dh2048_p[]={
-		0xF7,0x5F,0x18,0x4E,0xA4,0x66,0xC5,0xAE,0xE1,0x3C,0x52,0x75,
-		0xEC,0x81,0x79,0x52,0xA9,0x9E,0xEA,0x0A,0xD5,0x2C,0x58,0xC0,
-		0xE4,0x87,0x5A,0x62,0x46,0xEF,0xE7,0x3E,0xCD,0xD9,0xDE,0xE2,
-		0xF7,0xD4,0xA5,0x1D,0x3D,0x5C,0xFD,0xE1,0x25,0xBB,0xA9,0x33,
-		0x4F,0x5F,0x5F,0xF6,0x30,0x65,0x33,0xF6,0x15,0x96,0xE7,0x62,
-		0xF6,0xB2,0xC3,0x66,0xC0,0x10,0x6A,0x77,0xA2,0xB7,0x87,0x9F,
-		0x5F,0x48,0x3B,0x4A,0x11,0x4E,0xAC,0x15,0xAA,0xCE,0x10,0xF7,
-		0xA3,0x6D,0x93,0x80,0xA7,0x71,0x53,0x8C,0x40,0xD5,0x73,0x91,
-		0x50,0xFD,0x77,0xEC,0xD6,0x41,0x61,0x4E,0x5E,0xF7,0x00,0xE2,
-		0x63,0x74,0xA0,0xE2,0xF0,0x9C,0x80,0x4F,0x02,0xEB,0xEF,0xE4,
-		0x1E,0xF4,0x49,0x6D,0xCF,0x5B,0x09,0xE3,0xDC,0x4C,0x66,0x04,
-		0xE4,0xB3,0x94,0x7D,0xAF,0xB6,0xE8,0x15,0x65,0x2C,0xE6,0x41,
-		0x18,0x98,0xF7,0x80,0x5B,0x2C,0x00,0x78,0x5A,0xCB,0x20,0x4C,
-		0x63,0x71,0xE2,0xF6,0xAE,0x73,0x89,0x05,0xD2,0x44,0x2C,0x77,
-		0x73,0x03,0x19,0x0C,0xAD,0x2F,0x2F,0xDD,0xAB,0x85,0x67,0x43,
-		0x09,0xFC,0xDF,0x02,0xB6,0xD3,0xCE,0xAA,0x68,0xFF,0xA3,0x94,
-		0x4C,0xFD,0x2F,0x5C,0xE4,0x1A,0xF4,0x0C,0x58,0x5A,0x3D,0xDC,
-		0xEF,0x64,0x2B,0xA4,0xCF,0xF5,0xFF,0x6C,0x37,0xE9,0x0E,0xAE,
-		0x3D,0x84,0x61,0x91,0xFE,0x09,0x4B,0xF6,0x68,0xCB,0xC6,0x42,
-		0xE8,0x03,0xAC,0xA2,0x5D,0x49,0x2A,0xC7,0xF1,0xA5,0x7A,0x61,
-		0xC2,0x30,0xA4,0x3D,0xD9,0x2D,0xBC,0x6F,0xE6,0xE1,0xDE,0xD2,
-		0x98,0xE6,0x46,0x7B,
-    };
-    static unsigned char dh2048_g[]={
-        0x02,
-    };
-    DH *dh;
-
-	if ((dh=DH_new()) == NULL) return NULL;
-	dh->p = BN_bin2bn (dh2048_p, sizeof(dh2048_p), NULL);
-	dh->g = BN_bin2bn (dh2048_g, sizeof(dh2048_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL))
-    {
-        DH_free (dh);
-        return NULL;
-    }
-	return dh;
-}
-#endif
-#endif  // END DH CODE
-
-
 #include "compat.h"
 
 #include "thread/thread.h"
@@ -166,7 +115,9 @@ static mutex_t *ssl_mutexes = NULL;
 #if !defined(WIN32) && OPENSSL_VERSION_NUMBER < 0x10000000
 static unsigned long ssl_id_function (void);
 #endif
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 static void ssl_locking_function (int mode, int n, const char *file, int line);
+#endif
 #endif
 
 int header_timeout;
@@ -207,6 +158,66 @@ cache_file_contents banned_ip, allowed_ip;
 cache_file_contents useragents;
 
 int connection_running = 0;
+
+
+// Generated using `openssl dhparam -C -2 2048`
+// BEGIN DH CODE
+#ifdef HAVE_OPENSSL
+#include <openssl/dh.h>
+
+#if !defined(SSL_CTX_set_dh_auto)
+static DH *get_dh2048()
+{
+    static unsigned char dh2048_p[]={
+        0xF7,0x5F,0x18,0x4E,0xA4,0x66,0xC5,0xAE,0xE1,0x3C,0x52,0x75,
+        0xEC,0x81,0x79,0x52,0xA9,0x9E,0xEA,0x0A,0xD5,0x2C,0x58,0xC0,
+        0xE4,0x87,0x5A,0x62,0x46,0xEF,0xE7,0x3E,0xCD,0xD9,0xDE,0xE2,
+        0xF7,0xD4,0xA5,0x1D,0x3D,0x5C,0xFD,0xE1,0x25,0xBB,0xA9,0x33,
+        0x4F,0x5F,0x5F,0xF6,0x30,0x65,0x33,0xF6,0x15,0x96,0xE7,0x62,
+        0xF6,0xB2,0xC3,0x66,0xC0,0x10,0x6A,0x77,0xA2,0xB7,0x87,0x9F,
+        0x5F,0x48,0x3B,0x4A,0x11,0x4E,0xAC,0x15,0xAA,0xCE,0x10,0xF7,
+        0xA3,0x6D,0x93,0x80,0xA7,0x71,0x53,0x8C,0x40,0xD5,0x73,0x91,
+        0x50,0xFD,0x77,0xEC,0xD6,0x41,0x61,0x4E,0x5E,0xF7,0x00,0xE2,
+        0x63,0x74,0xA0,0xE2,0xF0,0x9C,0x80,0x4F,0x02,0xEB,0xEF,0xE4,
+        0x1E,0xF4,0x49,0x6D,0xCF,0x5B,0x09,0xE3,0xDC,0x4C,0x66,0x04,
+        0xE4,0xB3,0x94,0x7D,0xAF,0xB6,0xE8,0x15,0x65,0x2C,0xE6,0x41,
+        0x18,0x98,0xF7,0x80,0x5B,0x2C,0x00,0x78,0x5A,0xCB,0x20,0x4C,
+        0x63,0x71,0xE2,0xF6,0xAE,0x73,0x89,0x05,0xD2,0x44,0x2C,0x77,
+        0x73,0x03,0x19,0x0C,0xAD,0x2F,0x2F,0xDD,0xAB,0x85,0x67,0x43,
+        0x09,0xFC,0xDF,0x02,0xB6,0xD3,0xCE,0xAA,0x68,0xFF,0xA3,0x94,
+        0x4C,0xFD,0x2F,0x5C,0xE4,0x1A,0xF4,0x0C,0x58,0x5A,0x3D,0xDC,
+        0xEF,0x64,0x2B,0xA4,0xCF,0xF5,0xFF,0x6C,0x37,0xE9,0x0E,0xAE,
+        0x3D,0x84,0x61,0x91,0xFE,0x09,0x4B,0xF6,0x68,0xCB,0xC6,0x42,
+        0xE8,0x03,0xAC,0xA2,0x5D,0x49,0x2A,0xC7,0xF1,0xA5,0x7A,0x61,
+        0xC2,0x30,0xA4,0x3D,0xD9,0x2D,0xBC,0x6F,0xE6,0xE1,0xDE,0xD2,
+        0x98,0xE6,0x46,0x7B,
+    };
+    static unsigned char dh2048_g[]={
+        0x02,
+    };
+    DH *dh;
+    BIGNUM *p, *g;
+
+    if ((dh=DH_new()) == NULL) return NULL;
+    p = BN_bin2bn (dh2048_p, sizeof(dh2048_p), NULL);
+    g = BN_bin2bn (dh2048_g, sizeof(dh2048_g), NULL);
+    if ((p == NULL) || (g == NULL))
+    {
+        BN_free (p);
+        BN_free (g);
+        DH_free (dh);
+        return NULL;
+    }
+#if OPENSSL_VERSION_NUMBER >= 0x10100005L
+    DH_set0_pqg(dh, p, NULL, g);
+#else
+    dh->p = p;
+    dh->g = g;
+#endif
+    return dh;
+}
+#endif
+#endif  // END DH CODE
 
 
 static int compare_banned_ip (void *arg, void *a, void *b)
@@ -301,6 +312,7 @@ static unsigned long ssl_id_function (void)
 }
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 static void ssl_locking_function (int mode, int n, const char *file, int line)
 {
     if (mode & CRYPTO_LOCK)
@@ -308,6 +320,7 @@ static void ssl_locking_function (int mode, int n, const char *file, int line)
     else
         thread_mutex_unlock_c (&ssl_mutexes[n], line, file);
 }
+#endif
 
 
 static void get_ssl_certificate (ice_config_t *config)
@@ -322,7 +335,11 @@ static void get_ssl_certificate (ice_config_t *config)
         if (config->cert_file == NULL)
             break;
 
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+        new_ssl_ctx = SSL_CTX_new (TLS_server_method());
+#else
         new_ssl_ctx = SSL_CTX_new (SSLv23_server_method());
+#endif
         ssl_opts = SSL_CTX_get_options (new_ssl_ctx);
         SSL_CTX_set_options (new_ssl_ctx, ssl_opts|SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_COMPRESSION|SSL_OP_CIPHER_SERVER_PREFERENCE|SSL_OP_ALL);
 
@@ -991,8 +1008,8 @@ static sock_t wait_for_serversock (void)
 
 static client_t *accept_client (void)
 {
-    client_t *client = NULL;
     sock_t sock, serversock = wait_for_serversock ();
+    listener_t *server_conn = NULL;
     char addr [200];
 
     if (serversock == SOCK_ERROR)
@@ -1019,38 +1036,66 @@ static client_t *accept_client (void)
             WARN0 ("failed to set tcp options on client connection, dropping");
             break;
         }
-        client = calloc (1, sizeof (client_t));
-        if (client == NULL || connection_init (&client->connection, sock, addr) < 0)
-            break;
-
-        client->shared_data = r = refbuf_new (PER_CLIENT_REFBUF_SIZE);
-        r->len = 0; // for building up the request coming in
-
         global_lock ();
-        client_register (client);
-
         for (i=0; i < global.server_sockets; i++)
         {
             if (global.serversock[i] == serversock)
             {
-                client->server_conn = global.server_conn[i];
-                client->server_conn->refcount++;
-                if (client->server_conn->ssl && ssl_ok)
-                    connection_uses_ssl (&client->connection);
-                if (client->server_conn->shoutcast_compat)
-                    client->ops = &shoutcast_source_ops;
-                else
-                    client->ops = &http_request_ops;
+                server_conn = global.server_conn[i];
+                server_conn->refcount++;
                 break;
             }
         }
-        // long num = global.clients;
         global_unlock ();
-        client->flags |= CLIENT_ACTIVE;
-        return client;
+        if (server_conn)
+        {
+            client_t *client = NULL;
+            int not_using_ssl = 1;
+
+            if (ssl_ok && server_conn->ssl)
+                not_using_ssl = 0;
+            if (not_using_ssl)
+            {
+                if (sock_set_blocking (sock, 0) || (sock_set_cork (sock, 1) < 0 && sock_set_nodelay (sock)))
+                {
+                    WARN1 ("failed to set tcp options on incoming client connection %s, dropping", addr);
+                    break;
+                }
+            }
+            client = calloc (1, sizeof (client_t));
+            if (client == NULL || connection_init (&client->connection, sock, addr) < 0)
+            {
+                free (client);
+                break;
+            }
+
+            client->shared_data = r = refbuf_new (PER_CLIENT_REFBUF_SIZE);
+            r->len = 0; // for building up the request coming in
+
+            global_lock ();
+            client_register (client);
+            global_unlock ();
+
+            if (not_using_ssl == 0)
+                connection_uses_ssl (&client->connection);
+
+            if (server_conn->shoutcast_compat)
+                client->ops = &shoutcast_source_ops;
+            else
+                client->ops = &http_request_ops;
+            client->server_conn = server_conn;
+            client->flags |= CLIENT_ACTIVE;
+
+            return client;
+        }
     } while (0);
 
-    free (client);
+    if (server_conn)
+    {
+        global_lock ();
+        server_conn->refcount--;
+        global_unlock ();
+    }
     sock_close (sock);
     return NULL;
 }
@@ -1201,7 +1246,7 @@ static int http_client_request (client_t *client)
         {
             if (connection_peek (&client->connection) < 0)
             {
-                client->schedule_ms = client->worker->time_ms + (not_ssl_connection (&client->connection) ? 30 : 55);
+                client->schedule_ms = client->worker->time_ms + (not_ssl_connection (&client->connection) ? 90 : 133);
                 return 0;
             }
         }
@@ -1373,8 +1418,8 @@ static void *connection_thread (void *arg)
             client->counter = client->schedule_ms = timing_get_time();
             client->connection.con_time = client->schedule_ms/1000;
             client->connection.discon.time = client->connection.con_time + header_timeout;
-            client->schedule_ms += 6;
-            client_add_worker (client);
+            client->schedule_ms += 30;
+            client_add_incoming (client);
             stats_event_inc (NULL, "connections");
         }
         if (global.new_connections_slowdown)
@@ -1596,6 +1641,7 @@ static int _handle_source_request (client_t *client)
     config = config_get_config();
     _check_for_x_forwarded_for(config, client);
     config_release_config();
+    client->flags &= ~CLIENT_KEEPALIVE;
     
     if (uri[0] != '/')
     {
@@ -1644,7 +1690,8 @@ static void check_for_filtering (ice_config_t *config, client_t *client, char *u
         (type && (strcmp (type, ".flv") == 0 || strcmp (type, ".fla") == 0)))
     {
         client->flags |= CLIENT_WANTS_FLV;
-        DEBUG0 ("listener has requested FLV");
+        client->flags &= ~CLIENT_KEEPALIVE;
+        DEBUG1 ("listener at %s has requested FLV", &client->connection.ip[0]);
     }
     if (extension == NULL || uri == NULL)
         return;
@@ -1798,7 +1845,7 @@ void connection_listen_sockets_close (ice_config_t *config, int all_sockets)
 int connection_setup_sockets (ice_config_t *config)
 {
     static int sockets_setup = 2;
-    int count = 0, socket_count = 0, arr_size;
+    int count = 0, socket_count = 0, socket_attempt = 0, arr_size;
     listener_t *listener, **prev;
 
     global_lock();
@@ -1806,31 +1853,34 @@ int connection_setup_sockets (ice_config_t *config)
     listener = config->listen_sock;
     prev = &config->listen_sock;
     arr_size = count = global.server_sockets;
-    if (config->chuid && sockets_setup)
+    if (sockets_setup == 1)
     {
         // in case of changowner, run through the first time as root, but reject the second run through as that will 
-        // be as a user. after that it's fine.
+        // be as a user (initial startup of listening thread). after that it's fine.
         sockets_setup--;
-        if (sockets_setup == 0)
-        {
-            global_unlock();
-            return 0;
-        }
+        global_unlock();
+        return 0;
     }
+    if (sockets_setup > 0)
+        sockets_setup--;
     get_ssl_certificate (config);
     if (count)
         INFO1 ("%d listening sockets already open", count);
     while (listener)
     {
         socket_count = 0;
+        socket_attempt = 0;
 
         sock_server_t sockets = sock_get_server_sockets (listener->port, listener->bind_address);
 
         do
         {
-            sock_t sock = sock_get_next_server_socket (sockets);
+            sock_t sock = SOCK_ERROR;
+            if (sock_get_next_server_socket (sockets, &sock) < 0)
+                break;   // end of any available sockets
+            socket_attempt++;
             if (sock == SOCK_ERROR)
-                break;
+                continue;
             /* some win32 setups do not do TCP win scaling well, so allow an override */
             if (listener->so_sndbuf)
                 sock_set_send_buffer (sock, listener->so_sndbuf);
@@ -1839,7 +1889,7 @@ int connection_setup_sockets (ice_config_t *config)
             if (sock_listen (sock, listener->qlen) == SOCK_ERROR)
             {
                 sock_close (sock);
-                break;
+                continue;
             }
             if (count >= arr_size) // need to resize arrays?
             {
@@ -1861,13 +1911,22 @@ int connection_setup_sockets (ice_config_t *config)
         } while(1);
 
         sock_free_server_sockets (sockets);
-        if (socket_count == 0)
+        if (socket_count != socket_attempt)
         {
-            if (listener->bind_address)
-                ERROR2 ("Could not create listener socket on port %d bind %s",
-                        listener->port, listener->bind_address);
-            else
-                ERROR1 ("Could not create listener socket on port %d", listener->port);
+            if (socket_count == 0)
+            {
+                if (listener->bind_address)
+                    ERROR2 ("Could not create listener socket on port %d bind %s",
+                            listener->port, listener->bind_address);
+                else
+                    ERROR1 ("Could not create listener socket on port %d", listener->port);
+            }
+            if (sockets_setup)
+            {
+                global_unlock();
+                ERROR0 ("unable to setup all listening sockets");
+                return 0;
+            }
             /* remove failed connection */
             *prev = config_clear_listener (listener);
             listener = *prev;
@@ -1891,6 +1950,16 @@ int connection_setup_sockets (ice_config_t *config)
     return count;
 }
 
+
+void connection_reset (connection_t *con, uint64_t time_ms)
+{
+    con->con_time = time_ms/1000;
+    con->discon.time = con->con_time + 7;
+    con->sent_bytes = 0;
+#ifdef HAVE_OPENSSL
+    if (con->ssl) { SSL_shutdown (con->ssl); SSL_free (con->ssl); con->ssl = NULL; }
+#endif
+}
 
 void connection_close(connection_t *con)
 {

@@ -115,6 +115,7 @@ struct _client_tag
 
     uint64_t timer_start;
     uint64_t counter;
+    uint64_t aux_data;
 
     /* function to call to release format specific resources */
     void (*free_client_data)(struct _client_tag *client);
@@ -145,12 +146,13 @@ const char *client_keepalive_header (client_t *client);
 
 int  client_change_worker (client_t *client, worker_t *dest_worker);
 void client_add_worker (client_t *client);
+void client_add_incoming (client_t *client);
 worker_t *worker_selected (void);
 void worker_balance_trigger (time_t now);
 void workers_adjust (int new_count);
 void worker_wakeup (worker_t *worker);
 void worker_logger_init (void);
-void worker_logger (void);
+void worker_logger (int stop);
 
 
 /* client flags bitmask */

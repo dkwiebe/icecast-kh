@@ -799,7 +799,7 @@ static void rate_purge_entries (struct rate_calc *calc, uint64_t cutoff)
 /* add a value to sampled data, t is used to determine which sample
  * block the sample goes into.
  */
-void rate_add (struct rate_calc *calc, long value, uint64_t sid) 
+void rate_add_sum (struct rate_calc *calc, long value, uint64_t sid, uint64_t *sum)
 {
     uint64_t cutoff;
 
@@ -811,6 +811,8 @@ void rate_add (struct rate_calc *calc, long value, uint64_t sid)
         rate_purge_entries (calc, cutoff);
         return;
     }
+    if (sum)
+        *sum += value;
     while (1)
     {
         struct rate_calc_node *next = NULL, *node;
@@ -860,9 +862,9 @@ void rate_add (struct rate_calc *calc, long value, uint64_t sid)
 
 
 /* return the average sample value over all the blocks except the 
- * current one, as that may be incomplete
+ * current one, as that may be incomplete. t to reduce the duration
  */
-long rate_avg (struct rate_calc *calc)
+long rate_avg_shorten (struct rate_calc *calc, unsigned int t)
 {
     long total = 0, ssec = 1;
     float range = 1.0;
@@ -876,12 +878,17 @@ long rate_avg (struct rate_calc *calc)
         if (range < 1)
             range = 1;
         total = calc->total;
-        ssec = calc->ssec;
+        if (t < calc->ssec)
+            ssec = calc->ssec - t;
     }
     thread_spin_unlock (&calc->lock);
     return (long)(total / range * ssec);
 }
 
+long rate_avg (struct rate_calc *calc)
+{
+    return rate_avg_shorten (calc, 0);
+}
 
 /* reduce the samples used to calculate average */
 void rate_reduce (struct rate_calc *calc, unsigned int range)
@@ -989,7 +996,7 @@ int cached_treenode_free (void*x)
 }
 
 
-void cachefile_prune (cache_file_contents *cache)
+void cached_prune (cache_file_contents *cache)
 {
     if (cache == NULL)
         return;
@@ -1030,7 +1037,7 @@ void cached_file_recheck (cache_file_contents *cache, time_t now)
 
         if (cache->filename == NULL)
         {
-            cachefile_prune (cache);
+            cached_prune (cache);
             break;
         }
         if (stat (cache->filename, &file_stat) < 0)
@@ -1050,7 +1057,7 @@ void cached_file_recheck (cache_file_contents *cache, time_t now)
             break;
         }
 
-        cachefile_prune (cache);
+        cached_prune (cache);
         cache->contents = avl_tree_new (cache->compare, &cache->file_recheck);
         while (get_line (file, line, MAX_LINE_LEN))
         {
@@ -1105,7 +1112,7 @@ void cached_file_clear (cache_file_contents *cache)
 {
     if (cache == NULL)
         return;
-    cachefile_prune (cache);
+    cached_prune (cache);
     free (cache->filename);
     memset (cache, 0, sizeof (*cache));
 }

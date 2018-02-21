@@ -145,6 +145,40 @@ int format_get_plugin (format_plugin_t *plugin)
 }
 
 
+int format_check_frames (struct format_check_t *c)
+{
+    int ret = -1;
+    refbuf_t *r = refbuf_new (16384);
+    mpeg_sync sync;
+    mpeg_setup (&sync, c->desc);
+    mpeg_check_numframes (&sync, 20);
+
+    do
+    {
+        int bytes = pread (c->fd, r->data, 16384, 0);
+        if (bytes <= 0)
+            break;
+
+        r->len = bytes;
+        int unprocessed = mpeg_complete_frames (&sync, r, 0);
+        if (r->len == 0)
+        {
+            break;
+        }
+        c->offset = bytes - (r->len + unprocessed);
+        c->type = mpeg_get_type (&sync);
+        c->srate = mpeg_get_samplerate (&sync);
+        c->channels = mpeg_get_channels (&sync);
+        c->bitrate = mpeg_get_bitrate (&sync);
+        ret = 0;
+    } while (0);
+    refbuf_release (r);
+    mpeg_cleanup (&sync);
+
+    return ret;
+}
+
+
 int format_file_read (client_t *client, format_plugin_t *plugin, icefile_handle f)
 {
     refbuf_t *refbuf = client->refbuf;
@@ -192,9 +226,12 @@ int format_file_read (client_t *client, format_plugin_t *plugin, icefile_handle 
                 DEBUG1 ("End of requested range (%" PRId64 ")", client->connection.discon.offset);
                 return -1;
             }
-            range = client->connection.discon.offset - client->intro_offset + 1;
-            if (range < len)
-                len = range;
+            if (client->connection.discon.offset < (uint64_t)-1)
+            {
+                range = client->connection.discon.offset - client->intro_offset + 1;
+                if (range && range < len)
+                    len = range;
+            }
         }
         else
             if (client->connection.discon.time && client->worker->current_time.tv_sec >= client->connection.discon.time)
@@ -362,16 +399,11 @@ int format_general_headers (format_plugin_t *plugin, client_t *client)
             }
             else
             {
-                // treat range 0- as if no range set, for chrome
-                if (client->connection.discon.offset == (uint64_t)-1)
-                {
-                    client->connection.discon.offset = 0;
-                    client->intro_offset = 0;
-                    client->flags &= ~CLIENT_RANGE_END;
-                    len = 0;
-                }
-                else
-                    client->respcode = 200;
+                // ignore ranges on streams, treat as full
+                client->connection.discon.offset = 0;
+                client->intro_offset = 0;
+                client->flags &= ~CLIENT_RANGE_END;
+                len = 0;
             }
             length = len;
             if (length)
@@ -385,6 +417,7 @@ int format_general_headers (format_plugin_t *plugin, client_t *client)
                         contenttype ? contenttype : "application/octet-stream",
                         len, (uint64_t)client->intro_offset,
                         client->connection.discon.offset, total_size);
+                client->respcode = 206;
             }
             if (client->parser->req_type != httpp_req_head && length < 100 && (client->flags & CLIENT_RANGE_END) && fs == NULL)
             {
